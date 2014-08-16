@@ -9,15 +9,15 @@
     <packaging>apk</packaging>
     <name>dping</name>
 
-
     <properties>
         <android.version>4.1.1.4</android.version>
+        <android-maven-plugin.version>3.8.2</android-maven-plugin.version>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd_HH-mm</maven.build.timestamp.format>
-        <keystore.keyFile>your.keystore.file.path</keystore.keyFile>
-        <keystore.pass>your.keystore.pass</keystore.pass>
-        <keystore.password>your.keystore.password</keystore.password>
-        <keystore.alias>your.keystore.alias</keystore.alias>
+        <keystore.keyFile>com-dingpw-android.keystore</keystore.keyFile>
+        <keystore.pass>Qq1350991100</keystore.pass>
+        <keystore.password>Qq1350991100</keystore.password>
+        <keystore.alias>com.dingpw.android.keystore</keystore.alias>
     </properties>
 
 
@@ -48,12 +48,12 @@
     </dependencies>
 
     <build>
-        <finalName>${project.artifactId}-${project.version}-${maven.build.timestamp}</finalName>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>${android-maven-plugin.version}</version>
                 <configuration>
                     <androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
                     <assetsDirectory>${project.basedir}/assets</assetsDirectory>
@@ -65,6 +65,15 @@
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>
                 <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>alignApk</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>zipalign</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -79,34 +88,38 @@
 
     <profiles>
         <profile>
-            <id>sign</id>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jarsigner-plugin</artifactId>
-                        <version>1.2</version>
                         <executions>
                             <execution>
                                 <id>signing</id>
                                 <goals>
                                     <goal>sign</goal>
+                                    <goal>verify</goal>
                                 </goals>
                                 <phase>package</phase>
                                 <inherited>true</inherited>
                                 <configuration>
-                                    <archiveDirectory></archiveDirectory>
+                                    <removeExistingSignatures>true</removeExistingSignatures>
+                                    <archiveDirectory/>
                                     <includes>
-                                        <include>target/*.apk</include>
+                                        <include>${project.build.directory}/${project.artifactId}.apk</include>
                                     </includes>
                                     <keystore>${keystore.keyFile}</keystore>
-                                    <storepass>${keystore.pass}</storepass>
-                                    <keypass>${keystore.password}</keypass>
                                     <alias>${keystore.alias}</alias>
-                                    <arguments>
-                                        <argument>-sigalg</argument><argument>MD5withRSA</argument>
-                                        <argument>-digestalg</argument><argument>SHA1</argument>
-                                    </arguments>
+                                    <storepass>${keystore.password}</storepass>
+                                    <keypass>${keystore.pass}</keypass>
+                                    <verbose>true</verbose>
                                 </configuration>
                             </execution>
                         </executions>
@@ -114,26 +127,68 @@
                     <plugin>
                         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                         <artifactId>android-maven-plugin</artifactId>
+                        <version>${android-maven-plugin.version}</version>
                         <inherited>true</inherited>
                         <configuration>
+                            <release>false</release>
                             <sign>
                                 <debug>false</debug>
                             </sign>
                             <zipalign>
                                 <skip>false</skip>
                                 <verbose>true</verbose>
-                                <outputApk>${project.build.directory}/${project.artifactId}-${project.version}-signed-aligned.apk</outputApk>
+                                <inputApk>${project.build.directory}/${project.artifactId}.apk</inputApk>
+                                <outputApk>${project.build.directory}/${project.artifactId}-signed-aligned.apk
+                                </outputApk>
                             </zipalign>
                             <manifest>
                                 <debuggable>false</debuggable>
+                                <versionCodeAutoIncrement>true</versionCodeAutoIncrement>
                             </manifest>
+                            <proguard>
+                                <skip>false</skip>
+                            </proguard>
                         </configuration>
                         <executions>
+                            <execution>
+                                <id>manifestUpdate</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>manifest-update</goal>
+                                </goals>
+                            </execution>
                             <execution>
                                 <id>alignApk</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>zipalign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${project.build.directory}/${project.artifactId}-signed-aligned.apk</file>
+                                    <type>apk</type>
+                                    <classifier>signed-aligned</classifier>
+                                </artifact>
+                                <artifact>
+                                    <file>${project.build.directory}/proguard/mapping.txt</file>
+                                    <type>map</type>
+                                    <classifier>release</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-signed-aligned</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>attach-artifact</goal>
                                 </goals>
                             </execution>
                         </executions>
