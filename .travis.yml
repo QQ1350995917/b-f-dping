@@ -6,9 +6,6 @@ android:
     - extra-android-support
 
 
-
-
-
 notifications:
   irc: "irc.freenode.org#shoes"
   email:
