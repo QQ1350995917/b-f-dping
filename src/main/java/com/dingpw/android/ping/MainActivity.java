@@ -1,11 +1,10 @@
-package com.dingpw.tool.ping;
+package com.dingpw.android.ping;
 
 import android.app.Activity;
 import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-
 
 
 public class MainActivity extends Activity {

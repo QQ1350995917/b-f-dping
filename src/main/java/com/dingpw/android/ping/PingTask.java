@@ -1,4 +1,4 @@
-package com.dingpw.tool.ping;
+package com.dingpw.android.ping;
 
 import android.os.AsyncTask;
 import com.dingpw.djson.Djson;

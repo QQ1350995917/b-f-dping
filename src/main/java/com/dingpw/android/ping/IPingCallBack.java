@@ -1,4 +1,4 @@
-package com.dingpw.tool.ping;
+package com.dingpw.android.ping;
 
 import com.dingpw.djson.DjsonObject;
 
